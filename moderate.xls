@@ -1,0 +1,78 @@
+Sub Moderate()
+
+    Application.ScreenUpdating = False
+
+
+    Dim WkSh As Worksheet
+    Dim LRow As Long
+    Dim LRow2 As Long
+    Dim NxRow As Long
+    Dim LOpen As Double
+    Dim HClose As Double
+    Dim YrChange As Double
+    Dim PrChange As Double
+    Dim TlVolume As Double
+
+    For Each WkSh In ThisWorkbook.Sheets
+
+        WkSh.Columns("A:G").Sort Key1:=WkSh.Range("B1"), _
+        Order1:=xlAscending, Header:=xlYes
+        WkSh.Columns("A:G").Sort Key1:=WkSh.Range("A1"), _
+        Order1:=xlAscending, Header:=xlYes
+
+        LRow = WkSh.Cells(Rows.Count, 1).End(xlUp).Row
+        NxRow = 1
+        TlVolume = 0
+        LOpen = WkSh.Range("C2")
+
+        WkSh.Range("I1") = "Ticker"
+        WkSh.Range("J1") = "Yearly Change"
+        WkSh.Range("K1") = "Percent Change"
+        WkSh.Range("L1") = "Total Stock Volume"
+ 
+    
+        For TickerList = 2 To LRow
+            If WkSh.Cells(TickerList, 1) = WkSh.Cells(TickerList + 1, 1) Then
+                TlVolume = TlVolume + WkSh.Cells(TickerList, 7)
+            Else
+                HClose = WkSh.Cells(TickerList, 6)
+                TlVolume = TlVolume + WkSh.Cells(TickerList, 7)
+                YrChange = HClose - LOpen
+                On Error Resume Next  ' If LOpen is 0 there will be an error
+                PrChange = (HClose - LOpen) / LOpen
+                If Err.Number <> 0 Then
+                    PrChange = 0
+                End If
+                NxRow = NxRow + 1
+                WkSh.Cells(NxRow, 9) = WkSh.Cells(TickerList, 1)
+                WkSh.Cells(NxRow, 10) = YrChange
+                WkSh.Cells(NxRow, 11) = PrChange
+                WkSh.Cells(NxRow, 12) = TlVolume
+                TlVolume = 0
+                LOpen = WkSh.Cells(TickerList + 1, 3)
+            End If
+        Next TickerList
+    
+        LRow2 = WkSh.Cells(Rows.Count, 9).End(xlUp).Row
+    
+
+        For ShortList = 2 To LRow2
+            If WkSh.Cells(ShortList, 10) <= 0 Then
+                WkSh.Cells(ShortList, 10).Interior.Color = RGB(255, 0, 0)
+            Else
+                WkSh.Cells(ShortList, 10).Interior.Color = RGB(0, 255, 0)
+            End If
+        Next ShortList
+        
+
+        WkSh.Range("J2:J" & LRow2).NumberFormat = "0.000000000"
+        WkSh.Range("K2:K" & LRow2).NumberFormat = "0.00%"
+        WkSh.Range("Q2:Q3").NumberFormat = "0.00%"
+        WkSh.Cells.Columns.AutoFit
+        
+    Next WkSh
+    
+
+    Application.ScreenUpdating = True
+    
+End Sub
